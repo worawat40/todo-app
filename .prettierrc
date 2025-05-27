@@ -1,0 +1,17 @@
+{
+    "singleQuote": true,
+    "quoteProps": "preserve",
+    "trailingComma": "all",
+    "tabWidth": 4,
+    "overrides": [
+        {
+            "files": "*.scss",
+            "options": {
+                "tabWidth": 4
+            }
+        }
+    ],
+    "htmlWhitespaceSensitivity": "ignore",
+    "printWidth": 150,
+    "bracketSameLine": false
+}
