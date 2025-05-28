@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'x-hasura-admin-secret': process.env.NEXT_PUBLIC_HASURA_ADMIN_SECRET!,
+            'x-hasura-admin-secret': process.env.HASURA_ADMIN_SECRET!,
         },
         body: JSON.stringify({
             query: GET_LIST,
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'x-hasura-admin-secret': process.env.NEXT_PUBLIC_HASURA_ADMIN_SECRET!,
+            'x-hasura-admin-secret': process.env.HASURA_ADMIN_SECRET!,
         },
         body: JSON.stringify({
             query: UPDATE_USER,
