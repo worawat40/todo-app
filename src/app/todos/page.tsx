@@ -103,8 +103,10 @@ export default function TodosPage() {
     };
 
     useEffect(() => {
-        fetchTodos();
-    }, []);
+        if (userId) {
+            fetchTodos();
+        }
+    }, [userId]);
 
     const handleAddOrUpdateTask = async () => {
         if (!form.title.trim()) return;
