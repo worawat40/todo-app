@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { email, password, name } = await req.json();
+        const { email, password, name } = body;
 
         if (!email || !password || !name) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         });
 
         const { data, errors } = await response.json();
-
+        
         if (errors) {
             return NextResponse.json({ status: 'error', error: errors[0].message }, { status: 500 });
         }
