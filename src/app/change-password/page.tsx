@@ -21,6 +21,7 @@ export default function ChangePasswordPage() {
                 oldPassword,
                 newPassword,
             });
+            window.location.href = '/';
         } catch (err: any) {
             errorHandler(err);
         }
