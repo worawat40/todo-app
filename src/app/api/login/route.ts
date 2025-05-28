@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { LOGIN_USER } from '@/app/lib/graphql/user.query';
 import { loginSchema } from '@/app/lib/validation/request';
 import { formatZodErrors } from '@/app/lib/validation/helper';
+import { sessionOptions, UserSession } from '@/app/lib/session';
+import { getIronSession } from 'iron-session';
 import bcrypt from 'bcryptjs';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const result = loginSchema.safeParse(body);
@@ -37,13 +39,7 @@ export async function POST(req: Request) {
         const { data, errors } = await response.json();
 
         if (errors) {
-            return NextResponse.json(
-                {
-                    status: 'error',
-                    message: errors[0].message,
-                },
-                { status: 500 },
-            );
+            return NextResponse.json({ status: 'error', error: errors[0].message }, { status: 500 });
         }
 
         const user = data?.users?.[0];
@@ -71,10 +67,18 @@ export async function POST(req: Request) {
 
         const { password_hash, ...safeUser } = user;
 
-        return NextResponse.json({
+        const res = NextResponse.json({
             status: 'success',
             data: { user: safeUser },
         });
+
+        const session = await getIronSession<UserSession>(req, res, sessionOptions);
+        session.id = user.id;
+        session.email = user.email;
+        session.isLoggedIn = true;
+        await session.save();
+
+        return res;
     } catch (err) {
         console.error('Login error:', err);
         return NextResponse.json(

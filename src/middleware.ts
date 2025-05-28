@@ -1,16 +1,18 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { getIronSession } from 'iron-session';
+import { sessionOptions, UserSession } from '@/app/lib/session';
+import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
-    const isLoggedIn = request.cookies.get('auth_token');
+export async function middleware(req: NextRequest) {
+    const res = NextResponse.next();
+    const session = await getIronSession<UserSession>(req, res, sessionOptions);
 
-    if (!isLoggedIn && request.nextUrl.pathname === '/') {
-        return NextResponse.redirect(new URL('/login', request.url));
+    if (!session?.isLoggedIn) {
+        return NextResponse.redirect(new URL('/', req.url));
     }
 
-    return NextResponse.next();
+    return res;
 }
 
 export const config = {
-    matcher: ['/'],
+    matcher: ['/todos/:path*'],
 };

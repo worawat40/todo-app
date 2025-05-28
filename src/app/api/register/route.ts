@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { REGISTER_USER } from '@/app/lib/graphql/user.mutation';
+import { registerSchema } from '@/app/lib/validation/request';
+import { formatZodErrors } from '@/app/lib/validation/helper';
 
 export async function POST(req: Request) {
+    const body = await req.json();
+
+    const result = registerSchema.safeParse(body);
+    if (!result.success) {
+        return NextResponse.json(
+            {
+                status: 'error',
+                message: 'Validation failed',
+                errors: formatZodErrors(result.error),
+            },
+            { status: 422 },
+        );
+    }
+
     try {
         const { email, password, name } = await req.json();
 
@@ -28,15 +44,15 @@ export async function POST(req: Request) {
             }),
         });
 
-        const result = await response.json();
+        const { data, errors } = await response.json();
 
-        if (result.errors) {
-            return NextResponse.json({ error: result.errors[0].message }, { status: 500 });
+        if (errors) {
+            return NextResponse.json({ status: 'error', error: errors[0].message }, { status: 500 });
         }
 
-        return NextResponse.json({ user: result.data.insert_users_one }, { status: 201 });
+        return NextResponse.json({ status: 'success', data: data.insert_users_one }, { status: 201 });
     } catch (error) {
         console.error('Register error:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ status: 'error', error: 'Internal Server Error' }, { status: 500 });
     }
 }

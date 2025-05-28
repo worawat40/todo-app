@@ -2,15 +2,27 @@ import { NextResponse } from 'next/server';
 import { GET_LIST } from '@/app/lib/graphql/user.query';
 import { UPDATE_USER } from '@/app/lib/graphql/user.mutation';
 import bcrypt from 'bcryptjs';
+import { changePasswordSchema } from '@/app/lib/validation/request';
+import { formatZodErrors } from '@/app/lib/validation/helper';
 
 export async function POST(req: Request) {
-    const { email, oldPassword, newPassword } = await req.json();
+    const body = await req.json();
 
-    if (!email || !oldPassword || !newPassword) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    const result = changePasswordSchema.safeParse(body);
+
+    if (!result.success) {
+        return NextResponse.json(
+            {
+                status: 'error',
+                message: 'Validation failed',
+                errors: formatZodErrors(result.error),
+            },
+            { status: 422 },
+        );
     }
 
-    // get user by email
+    const { email, oldPassword, newPassword } = body;
+
     const response = await fetch(process.env.NEXT_PUBLIC_HASURA_GRAPHQL_ENDPOINT!, {
         method: 'POST',
         headers: {
@@ -23,23 +35,29 @@ export async function POST(req: Request) {
         }),
     });
 
-    const result = await response.json();
-    const user = result.data?.users?.[0];
+    const data = await response.json();
+    const user = data?.data?.users?.[0];
 
     if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // compare old password
     const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
     if (!isMatch) {
-        return NextResponse.json({ error: 'Old password is incorrect' }, { status: 401 });
+        return NextResponse.json(
+            {
+                status: 'error',
+                message: 'Validation failed',
+                errors: {
+                    oldPassword: ['Old password is incorrect'],
+                },
+            },
+            { status: 422 },
+        );
     }
 
-    // Hash new password
     const newHash = await bcrypt.hash(newPassword, 10);
 
-    // Update password
     const updateRes = await fetch(process.env.NEXT_PUBLIC_HASURA_GRAPHQL_ENDPOINT!, {
         method: 'POST',
         headers: {
